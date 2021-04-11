@@ -45,6 +45,7 @@ PERIOD [.]
 bye                 { return BYE; }
 cd		            { return CD;}
 alias		        { return ALIAS; }
+ls                  {return LS;}
 "\n"		        { return END; }
 [\"]                 { BEGIN(string_condition); }
 {TILDE}+                { return TILDE;}

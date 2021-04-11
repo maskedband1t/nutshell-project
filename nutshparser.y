@@ -7,18 +7,22 @@
 #include <unistd.h>
 #include <string.h>
 #include "global.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 int yylex(void);
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
 int runCDHome(char* arg);
+int runLs();
 %}
 
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING ALIAS TILDE END 
+%token <string> BYE CD STRING ALIAS TILDE LS END 
 
 %%
 cmd_line    :
@@ -27,6 +31,7 @@ cmd_line    :
 	| CD END                       {runCDHome("~"); return 1;}
 	| CD TILDE END                 {runCDHome($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
+	| LS END 						{runLs(); return 1;}
 	| STRING END                    {return 1;}
 
 %%
@@ -76,6 +81,22 @@ int runCDHome(char* arg){
 	strcpy(varTable.word[0], getenv("HOME"));
 	chdir(getenv("HOME"));
 	printf("look at me after %s \n" , varTable.word[0]);
+	return 1;
+}
+
+int runLs() {
+	printf("trying to run ls");
+	DIR *directory_;
+	struct dirent *myfile;
+	struct stat mystat;  // idk if we need to include -al support 
+
+	directory_ = opendir(getcwd(cwd,sizeof(cwd)));
+
+	while((myfile = readdir(directory_)) != NULL){
+		printf("%s\n" , myfile->d_name);
+	}
+
+	closedir(directory_);
 	return 1;
 }
 
