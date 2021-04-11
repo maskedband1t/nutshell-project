@@ -53,7 +53,8 @@ extern int yydebug;
     CD = 259,
     STRING = 260,
     ALIAS = 261,
-    END = 262
+    LS = 262,
+    END = 263
   };
 #endif
 
@@ -61,10 +62,10 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 17 "nutshparser.y"
+#line 22 "nutshparser.y"
 char *string;
 
-#line 68 "nutshparser.tab.h"
+#line 69 "nutshparser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

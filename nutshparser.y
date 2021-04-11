@@ -7,23 +7,30 @@
 #include <unistd.h>
 #include <string.h>
 #include "global.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 int yylex(void);
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
+int runLs();
 %}
 
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING ALIAS END
+%token <string> BYE CD STRING ALIAS LS END
 
 %%
 cmd_line    :
 	BYE END 		                {exit(1); return 1; }
 	| CD STRING END        			{runCD($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
+	| LS END 						{runLs(); return 1;}
+	| STRING END						{return 1;}
 
 %%
 
@@ -33,11 +40,15 @@ int yyerror(char *s) {
   }
 
 int runCD(char* arg) {
+	printf("look at me %s \n" , varTable.word[0]);
+
 	if (arg[0] != '/') { // arg is relative path
 		strcat(varTable.word[0], "/");
 		strcat(varTable.word[0], arg);
 
 		if(chdir(varTable.word[0]) == 0) {
+				printf("look at me after %s \n" , varTable.word[0]);
+
 			return 1;
 		}
 		else {
@@ -48,8 +59,10 @@ int runCD(char* arg) {
 		}
 	}
 	else { // arg is absolute path
-		if(chdir(arg) == 0){
+		if(chdir(arg) == 0){ // if succesful dir change
 			strcpy(varTable.word[0], arg);
+				printf("look at me after %s \n" , varTable.word[0]);
+
 			return 1;
 		}
 		else {
@@ -57,6 +70,23 @@ int runCD(char* arg) {
                        	return 1;
 		}
 	}
+
+}
+
+int runLs() {
+	printf("trying to run ls");
+	DIR *directory_;
+	struct dirent *myfile;
+	struct stat mystat;  // idk if we need to include -al support 
+
+	directory_ = opendir(getcwd(cwd,sizeof(cwd)));
+
+	while((myfile = readdir(directory_)) != NULL){
+		printf("%s\n" , myfile->d_name);
+	}
+
+	closedir(directory_);
+	return 1;
 }
 
 int runSetAlias(char *name, char *word) {
