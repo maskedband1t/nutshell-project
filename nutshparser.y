@@ -12,18 +12,22 @@ int yylex(void);
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
+int runCDHome(char* arg);
 %}
 
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING ALIAS END
+%token <string> BYE CD STRING ALIAS TILDE END 
 
 %%
 cmd_line    :
 	BYE END 		                {exit(1); return 1; }
 	| CD STRING END        			{runCD($2); return 1;}
+	| CD END                       {runCDHome("~"); return 1;}
+	| CD TILDE END                 {runCDHome($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
+	| STRING END                    {return 1;}
 
 %%
 
@@ -34,6 +38,14 @@ int yyerror(char *s) {
 
 int runCD(char* arg) {
 	if (arg[0] != '/') { // arg is relative path
+		if(arg[0] == '.' && arg[1] == '.'){
+			char s[100];
+			printf("%s\n", getcwd(s, 100));
+			chdir("..");
+			printf("%s\n", getcwd(s, 100));
+			strcpy(varTable.word[0], getcwd(s, 100));
+			
+		}
 		strcat(varTable.word[0], "/");
 		strcat(varTable.word[0], arg);
 
@@ -57,6 +69,14 @@ int runCD(char* arg) {
                        	return 1;
 		}
 	}
+}
+
+int runCDHome(char* arg){
+	printf("look at me %s \n" , varTable.word[0]);
+	strcpy(varTable.word[0], getenv("HOME"));
+	chdir(getenv("HOME"));
+	printf("look at me after %s \n" , varTable.word[0]);
+	return 1;
 }
 
 int runSetAlias(char *name, char *word) {

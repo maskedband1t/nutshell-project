@@ -29,10 +29,16 @@ bool ifAlias(char* name){
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+META [><|\&]
+QUOTE ["]
+NOTQUOTE [^"]
+TILDE [~]
+PERIOD [.]
+
 
 %%
 
-<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
+<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); printf("hi"); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
 
 [ ]		            { }
@@ -41,6 +47,8 @@ cd		            { return CD;}
 alias		        { return ALIAS; }
 "\n"		        { return END; }
 [\"]                 { BEGIN(string_condition); }
+{TILDE}+                { return TILDE;}
+test                {printf("test: %s\n", yytext);return BYE;}
 {CHAR}+              {if(ifAlias(yytext)) {
                         printf("yytext: %s\n", yytext);
                         //source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html
@@ -54,4 +62,6 @@ alias		        { return ALIAS; }
                         return STRING;
                     };
                      }
+
+                   
 %%
