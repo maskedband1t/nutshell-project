@@ -17,12 +17,15 @@ int runCD(char* arg);
 int runSetAlias(char *name, char *word);
 int runCDHome(char* arg);
 int runLs();
+int runPWD();
+int printENV();
+int listAlias();
 %}
 
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING ALIAS TILDE LS END 
+%token <string> BYE CD STRING ALIAS TILDE LS PWD PENV ENV END 
 
 %%
 cmd_line    :
@@ -31,7 +34,10 @@ cmd_line    :
 	| CD END                       {runCDHome("~"); return 1;}
 	| CD TILDE END                 {runCDHome($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
+	| ALIAS                        {listAlias(); return 1;}
+	| PENV END                     {printENV(); return 1;}
 	| LS END 						{runLs(); return 1;}
+	| PWD END                       {runPWD(); return 1;}
 	| STRING END                    {return 1;}
 
 %%
@@ -45,10 +51,10 @@ int runCD(char* arg) {
 	if (arg[0] != '/') { // arg is relative path
 		if(arg[0] == '.' && arg[1] == '.'){
 			char s[100];
-			printf("%s\n", getcwd(s, 100));
-			chdir("..");
-			printf("%s\n", getcwd(s, 100));
+			chdir(arg);
 			strcpy(varTable.word[0], getcwd(s, 100));
+			runPWD();
+			return 1;
 			
 		}
 		strcat(varTable.word[0], "/");
@@ -77,10 +83,9 @@ int runCD(char* arg) {
 }
 
 int runCDHome(char* arg){
-	printf("look at me %s \n" , varTable.word[0]);
 	strcpy(varTable.word[0], getenv("HOME"));
 	chdir(getenv("HOME"));
-	printf("look at me after %s \n" , varTable.word[0]);
+	printf("Current working dir: %s \n" , varTable.word[0]);
 	return 1;
 }
 
@@ -97,6 +102,24 @@ int runLs() {
 	}
 
 	closedir(directory_);
+	return 1;
+}
+
+int runPWD(){
+	printf("Current working dir: %s\n", varTable.word[0]);
+	return 1;
+}
+
+int printENV(){
+	for(int i =0; i < varTableLength;i++){
+		if(varTable.var[i]!=NULL && varTable.word[i] != NULL){
+			printf("%s=%s\n", varTable.var[i],varTable.word[i]);
+		}
+	}
+	return 1;
+}
+
+int listAlias(){
 	return 1;
 }
 

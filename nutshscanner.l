@@ -22,10 +22,19 @@ bool ifAlias(char* name){
     }
     return false;
 }
+
+char* substituteEV(char* name){
+    for(int i =0; i < varIndex; i++){
+        if(strcmp(varTable.var[i], name) == 0){
+            return varTable.word[i];
+        }
+    }
+}
 %}
 %array
 %option noyywrap
 %x string_condition
+%x envVar_condition
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
@@ -34,22 +43,34 @@ QUOTE ["]
 NOTQUOTE [^"]
 TILDE [~]
 PERIOD [.]
+ENV [$]
+LCURLY [{]
+RCURLY [}]
 
 
 %%
 
-<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); printf("hi"); return STRING;}
+<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
+
+<envVar_condition>{CHAR}+ {
+        yylval.string = strdup(substituteEV(yytext));
+        printf("%s\n",yylval.string);
+        return STRING;
+    }
+<envVar_condition>{RCURLY}        {BEGIN(INITIAL);}
 
 [ ]		            { }
 bye                 { return BYE; }
 cd		            { return CD;}
 alias		        { return ALIAS; }
 ls                  {return LS;}
+pwd                 {return PWD;}
+printenv            {return PENV;}
 "\n"		        { return END; }
+$\{                 { BEGIN(envVar_condition); }
 [\"]                 { BEGIN(string_condition); }
 {TILDE}+                { return TILDE;}
-test                {printf("test: %s\n", yytext);return BYE;}
 {CHAR}+              {if(ifAlias(yytext)) {
                         printf("yytext: %s\n", yytext);
                         //source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html

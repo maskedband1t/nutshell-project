@@ -1,6 +1,9 @@
 #include "stdbool.h"
 #include <limits.h>
 
+
+int varTableLength;
+
 struct evTable {
    char var[128][100];
    char word[128][100];

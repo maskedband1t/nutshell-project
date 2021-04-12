@@ -14,21 +14,26 @@ int main()
 {
     aliasIndex = 0;
     varIndex = 0;
+    varTableLength = 0;
 
     getcwd(cwd, sizeof(cwd));
 
     strcpy(varTable.var[varIndex], "PWD");
     strcpy(varTable.word[varIndex], cwd);
     varIndex++;
+    varTableLength++;
     strcpy(varTable.var[varIndex], "HOME");
     strcpy(varTable.word[varIndex], cwd);
     varIndex++;
+    varTableLength++;
     strcpy(varTable.var[varIndex], "PROMPT");
     strcpy(varTable.word[varIndex], "nutshell");
     varIndex++;
+    varTableLength++;
     strcpy(varTable.var[varIndex], "PATH");
     strcpy(varTable.word[varIndex], ".:/bin");
     varIndex++;
+    varTableLength++;
 
     system("clear");
     while(1)
