@@ -15,17 +15,20 @@ int yylex(void);
 int yyerror(char *s);
 int runCD(char* arg);
 int runSetAlias(char *name, char *word);
+int runUnAlias(char* name);
 int runCDHome(char* arg);
 int runLs();
 int runPWD();
 int printENV();
+int runSetENV(char* var, char* word);
+int runUnSetENV(char* var);
 int listAlias();
 %}
 
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING ALIAS TILDE LS PWD PENV ENV END 
+%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV END 
 
 %%
 cmd_line    :
@@ -33,9 +36,12 @@ cmd_line    :
 	| CD STRING END        			{runCD($2); return 1;}
 	| CD END                       {runCDHome("~"); return 1;}
 	| CD TILDE END                 {runCDHome($2); return 1;}
-	| ALIAS STRING STRING END		{runSetAlias($2, $3); return 1;}
+	| ALIAS STRING STRING END		{runSetAlias($2,$3); return 1;}
 	| ALIAS                        {listAlias(); return 1;}
+	| UNALIAS STRING END           {runUnAlias($2); return 1;}
 	| PENV END                     {printENV(); return 1;}
+	| SENV STRING STRING END     {runSetENV($2,$3); return 1;}
+	| UENV STRING END            {runUnSetENV($2); return 1;}
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| STRING END                    {return 1;}
@@ -120,7 +126,61 @@ int printENV(){
 }
 
 int listAlias(){
+	for(int i = 0; i < aliasIndex;i++){
+		if(aliasTable.name[i]!=NULL && aliasTable.word[i] != NULL){
+			printf("%s=%s\n", aliasTable.name[i],aliasTable.word[i]);
+		}
+	}
 	return 1;
+}
+
+int runSetENV(char* var, char* word){
+	for (int i = 0; i < varIndex; i++) {
+		if(strcmp(var, word) == 0){
+			printf("Error, expansion of \"%s\" would create a loop.\n", var);
+			return 1;
+		}
+		else if((strcmp(varTable.var[i], var) == 0) && (strcmp(varTable.word[i], word) == 0)){
+			printf("Error, expansion of \"%s\" would create a loop.\n", var);
+			return 1;
+		}  
+		else if(strcmp(varTable.var[i], var) == 0) {
+			strcpy(varTable.word[i], word);
+			return 1;
+		}
+	}
+	strcpy(varTable.var[varIndex], var);
+	strcpy(varTable.word[varIndex], word);
+	varIndex++;
+	varTableLength++;
+	return 1;
+}
+
+int runUnSetENV(char* var){
+    for (int i = 0; i < varIndex; i++) {
+		if(strcmp(varTable.var[i], var) == 0) {
+			strcpy(varTable.var[i], "");
+			strcpy(varTable.word[i], "");
+			varIndex--;
+			varTableLength--;
+			return 1;
+		}
+	}
+	return 1;
+}
+
+int runUnAlias(char* name){
+	printf("%s\n",word);
+	for (int i = 0; i < aliasIndex; i++) {
+		if(strcmp(aliasTable.name[i], name) == 0) {
+			printf("got here");
+			strcpy(aliasTable.name[i], "");
+			strcpy(aliasTable.word[i], "");
+			aliasIndex--;
+			return 1;
+		}
+	}
+	return 1;	
 }
 
 int runSetAlias(char *name, char *word) {

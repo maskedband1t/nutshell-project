@@ -37,7 +37,7 @@ char* substituteEV(char* name){
 %x envVar_condition
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
-ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][ )(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 META [><|\&]
 QUOTE ["]
 NOTQUOTE [^"]
@@ -53,10 +53,12 @@ RCURLY [}]
 <string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
 <string_condition>[\"]          {BEGIN(INITIAL);}
 
+$\{                 { BEGIN(envVar_condition); }
+[\"]                 { BEGIN(string_condition); }
+
 <envVar_condition>{CHAR}+ {
         yylval.string = strdup(substituteEV(yytext));
         printf("%s\n",yylval.string);
-        return STRING;
     }
 <envVar_condition>{RCURLY}        {BEGIN(INITIAL);}
 
@@ -64,12 +66,14 @@ RCURLY [}]
 bye                 { return BYE; }
 cd		            { return CD;}
 alias		        { return ALIAS; }
+unalias             {return UNALIAS;}
 ls                  {return LS;}
 pwd                 {return PWD;}
 printenv            {return PENV;}
+setenv              {return SENV;}
+unsetenv            {return UENV;}
 "\n"		        { return END; }
-$\{                 { BEGIN(envVar_condition); }
-[\"]                 { BEGIN(string_condition); }
+
 {TILDE}+                { return TILDE;}
 {CHAR}+              {if(ifAlias(yytext)) {
                         printf("yytext: %s\n", yytext);
@@ -84,6 +88,4 @@ $\{                 { BEGIN(envVar_condition); }
                         return STRING;
                     };
                      }
-
-                   
 %%
