@@ -6,6 +6,9 @@
 #include <string.h>
 #include "global.h"
 
+bool isUnalias = false;
+static char* globalEV;
+
 char* subAliases(char* name){
     for (int i = 0; i < aliasIndex; i++) {
         if(strcmp(aliasTable.name[i], name) == 0) {
@@ -15,6 +18,10 @@ char* subAliases(char* name){
     return name;
 }
 bool ifAlias(char* name){
+    if(isUnalias == true){
+        isUnalias = false;
+        return false;
+    }
     for (int i = 0; i < aliasIndex; i++) {
         if(strcmp(aliasTable.name[i], name) == 0) {
             return true;
@@ -30,14 +37,83 @@ char* substituteEV(char* name){
         }
     }
 }
+
+char* parseForEnv(char* input){
+    char returnString[200] = "";
+    char envString [200] = ""; 
+    bool findingEnv = false;
+    printf("input length %d\n" , strlen(input));
+    globalEV = input;
+
+    
+    
+
+    for (int i = 0 ; i < strlen(input) ; i++){
+        printf("current i: %d\n" , i);
+        printf("current char %c\n" , input[i]);
+        if(findingEnv == false)
+        { 
+            if(input[i] == '$' ){
+                printf("found $\n");
+                findingEnv = true;
+                printf("wtf %d \n" , findingEnv);
+            }
+            else{
+                printf("no dollar sign, just appending\n");
+                strncat(returnString , &input[i] , 1);
+            }
+            if(i + 1 == strlen(input)){
+                strcpy(globalEV , returnString);
+                return &returnString;
+            }
+            else{
+                continue;
+            }
+            
+        }
+        else{
+            if(input[i] != '{' && input[i] != '}'){
+                printf("expanding...\n");
+                strncat(envString , &input[i] , 1);
+            }
+
+            if(input[i] == '}'){
+                
+                strcat(returnString , substituteEV(envString));
+                findingEnv = false;
+                printf("finished expansion\n");
+            }
+            
+            
+        }
+
+        if(i + 1 == strlen(input)){
+            printf("do i return?\n");
+            printf("Was all our hard work worth it: %s\n" , envString);
+            printf("Was all our hard work worth it: %s\n" , returnString);
+            strcpy(globalEV , returnString);
+            printf("fknwork is: %s\n" , globalEV);  
+            return &returnString;
+        }
+        else{
+            continue;
+        }
+
+ 
+    }
+
+   
+}
+
 %}
 %array
 %option noyywrap
 %x string_condition
 %x envVar_condition
+%x testing_condition
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
-ANYCHAR            [)(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -][ )(*&%$#@!`;,\.a-zA-Z0-9'/*_=~ -]*
+ANYCHAR            [$}{)(*&%#@!`;,\.a-zA-Z0-9'/*_=~ -][ $)(}{*&%#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 META [><|\&]
 QUOTE ["]
 NOTQUOTE [^"]
@@ -50,8 +126,13 @@ RCURLY [}]
 
 %%
 
-<string_condition>{ANYCHAR}+     { yylval.string = strdup(yytext); return STRING;}
-<string_condition>[\"]          {BEGIN(INITIAL);}
+
+
+<string_condition>{ANYCHAR}+     {parseForEnv(yytext); yylval.string = strdup(globalEV); return STRING;}
+<string_condition>[\"]          {BEGIN(0);}
+
+
+
 
 $\{                 { BEGIN(envVar_condition); }
 [\"]                 { BEGIN(string_condition); }
@@ -66,7 +147,7 @@ $\{                 { BEGIN(envVar_condition); }
 bye                 { return BYE; }
 cd		            { return CD;}
 alias		        { return ALIAS; }
-unalias             {return UNALIAS;}
+unalias             {isUnalias = true; return UNALIAS;}
 ls                  {return LS;}
 pwd                 {return PWD;}
 printenv            {return PENV;}
@@ -77,7 +158,6 @@ unsetenv            {return UENV;}
 {TILDE}+                { return TILDE;}
 {CHAR}+              {if(ifAlias(yytext)) {
                         printf("yytext: %s\n", yytext);
-                        //source: https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html
                            char *yycopy = strdup( subAliases(yytext) );
                            for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
                                unput( yycopy[i] );

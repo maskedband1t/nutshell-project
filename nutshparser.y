@@ -135,12 +135,10 @@ int listAlias(){
 }
 
 int runSetENV(char* var, char* word){
+
 	for (int i = 0; i < varIndex; i++) {
-		if(strcmp(var, word) == 0){
-			printf("Error, expansion of \"%s\" would create a loop.\n", var);
-			return 1;
-		}
-		else if((strcmp(varTable.var[i], var) == 0) && (strcmp(varTable.word[i], word) == 0)){
+
+		if((strcmp(varTable.var[i], var) == 0) && (strcmp(varTable.word[i], word) == 0)){
 			printf("Error, expansion of \"%s\" would create a loop.\n", var);
 			return 1;
 		}  
@@ -170,10 +168,8 @@ int runUnSetENV(char* var){
 }
 
 int runUnAlias(char* name){
-	printf("%s\n",word);
 	for (int i = 0; i < aliasIndex; i++) {
 		if(strcmp(aliasTable.name[i], name) == 0) {
-			printf("got here");
 			strcpy(aliasTable.name[i], "");
 			strcpy(aliasTable.word[i], "");
 			aliasIndex--;
