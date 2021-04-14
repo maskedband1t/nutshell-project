@@ -23,13 +23,34 @@ int printENV();
 int runSetENV(char* var, char* word);
 int runUnSetENV(char* var);
 int listAlias();
+
+struct list_node {
+    struct list_node  *next;
+    char*           value;
+};
+struct list {
+    struct list_node  *head, **tail;
+};
+
+struct list *new_list() {
+    struct list *rv = malloc(sizeof(struct list));
+    rv->head = 0;
+    rv->tail = &rv->head;
+    return rv; }
+void push_back(struct list *list, char* value) {
+    struct list_node *node = malloc(sizeof(struct list_node));
+    node->next = 0;
+    node->value = value;
+    *list->tail = node;
+    list->tail = &node->next; }
+
 %}
 
-%union {char *string;}
+%union {char *string; struct list *list;}
 
 %start cmd_line
-%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV TEST END 
-
+%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV  UENV TEST END 
+%type <list> foobar   
 %%
 cmd_line    :
 	BYE END 		                {exit(1); return 1; }
@@ -39,13 +60,20 @@ cmd_line    :
 	| ALIAS STRING STRING END		{runSetAlias($2,$3); return 1;}
 	| ALIAS                        {listAlias(); return 1;}
 	| UNALIAS STRING END           {runUnAlias($2); return 1;}
-	| PENV END                     {printENV(); return 1;}
-	| SENV STRING STRING END     {runSetENV($2,$3); return 1;}
-	| UENV STRING END            {runUnSetENV($2); return 1;}
+	| PENV END                     	{printENV(); return 1;}
+	| SENV STRING STRING END     	{runSetENV($2,$3); return 1;}
+	| UENV STRING END            	{runUnSetENV($2); return 1;}
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
 	| STRING END                    {printf("Unregonized command.\n");return 1;}
+	| foobar END 					{while($1-> head != NULL){printf("node value: %s\n" , $1-> head -> value); $1-> head = $1 -> head -> next;};return 1;}
+
+foobar :
+
+	| STRING 					{push_back($$ = new_list() , $1);printf("made new list\n"); printf("should be something: %s\n" , $$->head);}
+	| foobar STRING				{push_back($1 , $2); $$ = $1; printf("pushed back something\n");}
+
 
 %%
 
@@ -53,6 +81,8 @@ int yyerror(char *s) {
   printf("%s\n",s);
   return 0;
   }
+
+
 
 int runCD(char* arg) {
 	if (arg[0] != '/') { // arg is relative path

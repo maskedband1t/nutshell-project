@@ -9,6 +9,20 @@ struct Node {
     struct Node* next ;
 };
 
+// struct nonbuiltin {
+//     char args[128][100];
+//     char* command;
+// };
+// struct commandpipeline{
+//     struct nonbuiltin commands[];
+//     struct nonbuiltin head ;
+//     struct nonbuiltin* next;
+// };
+
+// for each command in commandpipeline.commands {
+//     execve(command.command , command.args);
+// }
+
 struct evTable {
    char var[128][100];
    char word[128][100];

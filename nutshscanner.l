@@ -116,7 +116,6 @@ char* parseForEnv(char* input){
 %option noyywrap
 %x string_condition
 %x envVar_condition
-%x testing_condition
 
 CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [$}{)(*&%#@!`;,\.a-zA-Z0-9'/*_=~ -][ $)(}{*&%#@!`;,\.a-zA-Z0-9'/*_=~ -]*
@@ -150,37 +149,6 @@ $\{                 { BEGIN(envVar_condition); }
     }
 <envVar_condition>{RCURLY}        {BEGIN(INITIAL);}
 
-<testing_condition>[  \t\r\n]+{CHAR}+  {
-    printf("in condition");
-
-    struct Node* current = NULL;
-    current = (struct Node*)malloc(sizeof(struct Node));
-    current->data = strdup(yytext);
-
-    if(head == NULL){
-        head = current;
-        tail = current;
-    }
-    else{
-        tail = appendToLL(tail , current);
-    }
-    
-
-
-}
-<testing_condition>[  \t\r\n]+  {
-    printf("current LL\n");
-    if (head != NULL){
-         struct Node* cur = head;
-    while(cur -> next != NULL){
-        printf("%s\n" , cur -> data);
-    }
-    }
-   
-    BEGIN(0);
-}
-
-
 
 [ ]		            { }
 bye                 { return BYE; }
@@ -192,7 +160,7 @@ pwd                 {return PWD;}
 printenv            {return PENV;}
 setenv              {return SENV;}
 unsetenv            {return UENV;}
-testing             {BEGIN(testing_condition);return TEST;}
+mkdir             {yylval.string = strdup(yytext) ; return STRING;}
 "\n"		        { return END; }
 
 {TILDE}+                { return TILDE;}

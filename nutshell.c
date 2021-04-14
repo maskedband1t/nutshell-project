@@ -10,6 +10,7 @@
 char *getcwd(char *buf, size_t size);
 int yyparse();
 
+// ! need a function that takes in all args in commandpipeline and executes execve for all of them 
 int main()
 {
     aliasIndex = 0;
