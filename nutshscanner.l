@@ -8,6 +8,10 @@
 
 bool isUnalias = false;
 static char* globalEV;
+static char  arguments[100] = "";
+static struct Node* previous = NULL;
+static struct Node* head = NULL;
+static struct Node* tail = NULL;
 
 char* subAliases(char* name){
     for (int i = 0; i < aliasIndex; i++) {
@@ -38,28 +42,36 @@ char* substituteEV(char* name){
     }
 }
 
+struct Node* appendToLL(struct Node* tail ,struct Node* node){
+    printf("trying to append\n");
+    if(tail->next == NULL){
+        tail->next = node;
+    }
+    else{
+        printf("you didnt give me a tail!\n");
+        printf("next is: %s\n" , tail->next);
+    }
+
+    return tail;
+}
+
 char* parseForEnv(char* input){
     char returnString[200] = "";
     char envString [200] = ""; 
     bool findingEnv = false;
-    printf("input length %d\n" , strlen(input));
     globalEV = input;
 
     
     
 
     for (int i = 0 ; i < strlen(input) ; i++){
-        printf("current i: %d\n" , i);
-        printf("current char %c\n" , input[i]);
+
         if(findingEnv == false)
         { 
             if(input[i] == '$' ){
-                printf("found $\n");
                 findingEnv = true;
-                printf("wtf %d \n" , findingEnv);
             }
             else{
-                printf("no dollar sign, just appending\n");
                 strncat(returnString , &input[i] , 1);
             }
             if(i + 1 == strlen(input)){
@@ -73,7 +85,6 @@ char* parseForEnv(char* input){
         }
         else{
             if(input[i] != '{' && input[i] != '}'){
-                printf("expanding...\n");
                 strncat(envString , &input[i] , 1);
             }
 
@@ -81,18 +92,13 @@ char* parseForEnv(char* input){
                 
                 strcat(returnString , substituteEV(envString));
                 findingEnv = false;
-                printf("finished expansion\n");
             }
             
             
         }
 
         if(i + 1 == strlen(input)){
-            printf("do i return?\n");
-            printf("Was all our hard work worth it: %s\n" , envString);
-            printf("Was all our hard work worth it: %s\n" , returnString);
-            strcpy(globalEV , returnString);
-            printf("fknwork is: %s\n" , globalEV);  
+    
             return &returnString;
         }
         else{
@@ -140,8 +146,41 @@ $\{                 { BEGIN(envVar_condition); }
 <envVar_condition>{CHAR}+ {
         yylval.string = strdup(substituteEV(yytext));
         printf("%s\n",yylval.string);
+        return STRING;
     }
 <envVar_condition>{RCURLY}        {BEGIN(INITIAL);}
+
+<testing_condition>[  \t\r\n]+{CHAR}+  {
+    printf("in condition");
+
+    struct Node* current = NULL;
+    current = (struct Node*)malloc(sizeof(struct Node));
+    current->data = strdup(yytext);
+
+    if(head == NULL){
+        head = current;
+        tail = current;
+    }
+    else{
+        tail = appendToLL(tail , current);
+    }
+    
+
+
+}
+<testing_condition>[  \t\r\n]+  {
+    printf("current LL\n");
+    if (head != NULL){
+         struct Node* cur = head;
+    while(cur -> next != NULL){
+        printf("%s\n" , cur -> data);
+    }
+    }
+   
+    BEGIN(0);
+}
+
+
 
 [ ]		            { }
 bye                 { return BYE; }
@@ -153,6 +192,7 @@ pwd                 {return PWD;}
 printenv            {return PENV;}
 setenv              {return SENV;}
 unsetenv            {return UENV;}
+testing             {BEGIN(testing_condition);return TEST;}
 "\n"		        { return END; }
 
 {TILDE}+                { return TILDE;}

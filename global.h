@@ -4,6 +4,11 @@
 
 int varTableLength;
 
+struct Node {
+    char* data ;
+    struct Node* next ;
+};
+
 struct evTable {
    char var[128][100];
    char word[128][100];

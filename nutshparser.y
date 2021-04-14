@@ -28,13 +28,13 @@ int listAlias();
 %union {char *string;}
 
 %start cmd_line
-%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV END 
+%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV TEST END 
 
 %%
 cmd_line    :
 	BYE END 		                {exit(1); return 1; }
 	| CD STRING END        			{runCD($2); return 1;}
-	| CD END                       {runCDHome("~"); return 1;}
+	| CD END                       {printf("it me");runCDHome("~"); return 1;}
 	| CD TILDE END                 {runCDHome($2); return 1;}
 	| ALIAS STRING STRING END		{runSetAlias($2,$3); return 1;}
 	| ALIAS                        {listAlias(); return 1;}
@@ -44,7 +44,8 @@ cmd_line    :
 	| UENV STRING END            {runUnSetENV($2); return 1;}
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
-	| STRING END                    {return 1;}
+	| TEST END						{printf("Hi"); return 1;}
+	| STRING END                    {printf("Unregonized command.\n");return 1;}
 
 %%
 

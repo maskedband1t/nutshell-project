@@ -1,6 +1,6 @@
 CC=/usr/bin/cc
 
-all:  bison-config flex-config nutshell 
+all:  bison-config flex-config nutshell output
 
 bison-config:
 	bison -d nutshparser.y
