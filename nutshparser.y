@@ -10,7 +10,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
 int yylex(void);
 int yyerror(char *s);
 int runCD(char* arg);
@@ -22,7 +21,7 @@ int runPWD();
 int printENV();
 int runSetENV(char* var, char* word);
 int runUnSetENV(char* var);
-int listAlias();
+int listAlias(struct file_struct* file);
 
 
 struct list_node {
@@ -47,11 +46,18 @@ void push_back(struct list *list, char* value) {
 
 %}
 
-%union {char *string; struct list *list;}
+%union {
+	char *string; 
+	struct list *list;
+	struct file_struct* f;
+	int symbol;
+}
 
 %start cmd_line
 %token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV TEST META END 
+%token <symbol>  LANGLE, RANGLE DUBR_ANGLE PIPE
 %type <list> foobar   
+%type<f> file_out
 %%
 cmd_line    :
 	BYE END 		                {balls = false; exit(1); return 1; }
@@ -59,7 +65,7 @@ cmd_line    :
 	| CD END                       {balls = false;runCDHome("~"); return 1;}
 	| CD TILDE END                 {balls = false; runCDHome($2); return 1;}
 	| ALIAS STRING STRING END		{printf("HUHHH");balls = false; runSetAlias($2,$3); return 1;}
-	| ALIAS                        {balls = false; listAlias(); return 1;}
+	| ALIAS file_out END                    {balls = false; listAlias($2); return 1;}
 	| UNALIAS STRING END           {balls = false; runUnAlias($2); return 1;}
 	| PENV END                     	{balls = false; printENV(); return 1;}
 	| SENV STRING STRING END     	{balls = false; runSetENV($2,$3); return 1;}
@@ -74,6 +80,10 @@ foobar :
 	| STRING 					{balls = true;push_back($$ = new_list() , $1); assignToStruct($1);}
 	| foobar STRING				{push_back($1 , $2); $$ = $1; assignToStruct($2); startCommand++;} 
 
+file_out :                          { $$ = NULL; }
+        | DUBR_ANGLE STRING         { $$ = create_file_struct($2, 0); }
+        | RANGLE STRING            	{ $$ = create_file_struct($2, 1); }
+
 %%
 
 int yyerror(char *s) {
@@ -85,10 +95,10 @@ int assignToStruct(char *nodeValue){
 	struct nonbuiltin foo;
 	// char constants
 	char pipe[1] = "|";
-	char lAngle[1] = "<";
-	char dubLAngle[1] = "<<";
-	char rAngle[1] = ">";
-	char dubRAngle[1] = ">>";
+	char testlAngle[1] = "<";
+	char testdubLAngle[1] = "<<";
+	char testrAngle[1] = ">";
+	char testdubRAngle[1] = ">>";
 	char amp[1] = "&";
 	char test[100];
 
@@ -100,18 +110,6 @@ int assignToStruct(char *nodeValue){
 	}
 	if(strcmp(nodeValue, pipe) == 0){
 		startCommand = -1; // one  away from reading cmd
-	}
-	else if(strcmp(nodeValue, lAngle) == 0){
-		strcpy(foo.command, nodeValue);
-	}
-	else if(strcmp(nodeValue, dubLAngle) == 0){
-		strcpy(foo.command, nodeValue);
-	}
-	else if(strcmp(nodeValue, rAngle) == 0){
-		strcpy(foo.command, nodeValue);
-	}
-	else if(strcmp(nodeValue, dubRAngle) == 0){
-		strcpy(foo.command, nodeValue);
 	}
 	else if(strcmp(nodeValue, amp) == 0){
 		strcpy(foo.command, nodeValue);
@@ -201,8 +199,27 @@ int printENV(){
 	return 1;
 }
 
-int listAlias(){
-	for(int i = 0; i < aliasIndex;i++){
+int listAlias(struct file_struct* file){
+	if (file != NULL) {
+		
+        char *mode = "w";
+        if(file->type == 0) {
+            mode = "a";
+        }
+        FILE *new_file = fopen(file->name, mode); // opens file
+        if (new_file != NULL) {
+            for (int i = 0; i < aliasIndex; i++) {
+				fputs(aliasTable.name[i], new_file);
+				fputs("=", new_file);
+				fputs(aliasTable.word[i], new_file);
+				fputs("\n", new_file);
+        	}        
+        	fclose(new_file);
+        }
+        return 1;
+    }
+
+	for(int i = 1; i < aliasIndex;i++){
 		if(aliasTable.name[i]!=NULL && aliasTable.word[i] != NULL){
 			printf("%s=%s\n", aliasTable.name[i],aliasTable.word[i]);
 		}

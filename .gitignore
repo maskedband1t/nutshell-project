@@ -1,4 +1,5 @@
 nutshparser.tab.c
 nutshparser.tab.h
 nutshell.o
+MAIN.o
 lex.yy.c

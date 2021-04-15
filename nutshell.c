@@ -10,6 +10,15 @@
 char *getcwd(char *buf, size_t size);
 int yyparse();
 
+struct file_struct* create_file_struct(char* name, int type) {
+    struct file_struct* output = malloc(sizeof(struct file_struct));
+    output->name = malloc(1024 * sizeof(char)); // mem safe
+    output->type = type;
+    strcpy(output->name, name);
+    printf("name: %s\n", strdup(output->name));
+    printf("type: %d\n", output->type);
+    return output;
+}
 // ! need a function that takes in all args in commandpipeline and executes execve for all of them 
 
 int runNonBuilt(struct nonbuiltin command){
@@ -113,9 +122,13 @@ int main()
     varIndex++;
     varTableLength++;
     strcpy(varTable.var[varIndex], "PATH");
-    strcpy(varTable.word[varIndex], ".:/bin");
+    strcpy(varTable.word[varIndex], ".:/bin:/usr/bin");
     varIndex++;
     varTableLength++;
+
+    strcpy(aliasTable.name[aliasIndex], ".");
+    strcpy(aliasTable.word[aliasIndex], cwd);
+    aliasIndex++;
 
     system("clear");
     while(1)
