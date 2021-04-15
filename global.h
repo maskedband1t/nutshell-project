@@ -15,8 +15,7 @@ struct nonbuiltin {
     char command[100];
  };
  struct commandpipeline{
-     struct nonbuiltin commands;
-     struct nonbuiltin head;
+     struct nonbuilin* 
  };
 
 // for each command in commandpipeline.commands {

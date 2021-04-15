@@ -33,7 +33,6 @@ int runNonBuilt(struct nonbuiltin command){
         path++;
     }
 
-    printf("num paths is: %d\n" , num_paths);
 
     char* pathsArr [num_paths];
 
@@ -43,24 +42,54 @@ int runNonBuilt(struct nonbuiltin command){
     
     pathsArr[0] = currentPath;
 
+
     
     for (int i = 1 ; i < num_paths ; i++){
         currentPath = strtok(NULL , ":");
         pathsArr[i] = currentPath;
     }
 
-    for(int i = 0 ; i < num_paths; i++){
-        printf("One path: %s\n" , pathsArr[i]);
-    }
 
-    printf("Please don't be . : %s\n" , ogPath);
 
-    strcpy(varTable.word[3] , ogPath);
+
+
+
 
 
     // ? from here , we need to check each path and see if there exists an executable in that path. If so, then use execv with that given path. 
     // ! might need to make path_vars struct, hopefully not tho
-    
+
+
+    // i.e running echo command 
+    // 1. go thru each path and append the command and call access on that path. if its ok then i use that path 
+
+    char* correctPath = "";
+
+    for(int i = 0 ; i < num_paths; i++){
+        char* tempPath = strdup(pathsArr[i]);
+        strcat(tempPath , (char*) "/");
+        strcat(tempPath , command.args[0]);
+
+        if(access(tempPath , F_OK) == 0){
+            correctPath = strdup(tempPath);
+            break;
+        }
+        
+    }
+
+    if(strcmp(correctPath , (char*)"") == 0){
+        // means we didnt find an exe in any of the paths in PATH
+        printf("nah son try another command \n");
+
+    }
+
+
+
+
+
+
+
+
 
  
     printf("calling execv...\n");
@@ -73,19 +102,20 @@ int runNonBuilt(struct nonbuiltin command){
 
     arr[argIndex] = NULL;
 
-    
+    strcpy(varTable.word[3] , ogPath);
+
 
 
     int pid = fork();
 
     if(pid == 0){
         // child process
-            ret = execv("/usr/bin/echo" , arr);
+            ret = execv(correctPath , arr);
     }
     wait(2);
 
-    printf("hopefully didnt close\n");
     argIndex = 0;
+
     return 0;
 }
 
