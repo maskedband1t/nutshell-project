@@ -54,24 +54,24 @@ void push_back(struct list *list, char* value) {
 %type <list> foobar   
 %%
 cmd_line    :
-	BYE END 		                {exit(1); return 1; }
-	| CD STRING END        			{runCD($2); return 1;}
-	| CD END                       {printf("it me");runCDHome("~"); return 1;}
-	| CD TILDE END                 {runCDHome($2); return 1;}
-	| ALIAS STRING STRING END		{runSetAlias($2,$3); return 1;}
-	| ALIAS                        {listAlias(); return 1;}
-	| UNALIAS STRING END           {runUnAlias($2); return 1;}
-	| PENV END                     	{printENV(); return 1;}
-	| SENV STRING STRING END     	{runSetENV($2,$3); return 1;}
+	BYE END 		                {balls = false; exit(1); return 1; }
+	| CD STRING END        			{balls = false; runCD($2); return 1;}
+	| CD END                       {balls = false;runCDHome("~"); return 1;}
+	| CD TILDE END                 {balls = false; runCDHome($2); return 1;}
+	| ALIAS STRING STRING END		{printf("HUHHH");balls = false; runSetAlias($2,$3); return 1;}
+	| ALIAS                        {balls = false; listAlias(); return 1;}
+	| UNALIAS STRING END           {balls = false; runUnAlias($2); return 1;}
+	| PENV END                     	{balls = false; printENV(); return 1;}
+	| SENV STRING STRING END     	{balls = false; runSetENV($2,$3); return 1;}
 	| UENV STRING END            	{runUnSetENV($2); return 1;}
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
-	| foobar END 					{$1-> head = $1 -> head -> next; printf("in foobar end\n"); startCommand,commandIndex,argIndex = 0;return 1;};
+	| foobar END 					{$1-> head = $1 -> head -> next; startCommand,commandIndex = 0;return 1;};
 
 foobar :
 
-	| STRING 					{push_back($$ = new_list() , $1); assignToStruct($1);}
+	| STRING 					{balls = true;push_back($$ = new_list() , $1); assignToStruct($1);}
 	| foobar STRING				{push_back($1 , $2); $$ = $1; assignToStruct($2); startCommand++;} 
 
 %%
@@ -82,7 +82,6 @@ int yyerror(char *s) {
   }
 
 int assignToStruct(char *nodeValue){
-	printf("in here%d\n",startCommand);
 	struct nonbuiltin foo;
 	// char constants
 	char pipe[1] = "|";
@@ -93,48 +92,39 @@ int assignToStruct(char *nodeValue){
 	char amp[1] = "&";
 	char test[100];
 
-	printf("this is node value : %s\n", nodeValue);
 
 	
 	if(startCommand == 0){
 		strcpy(foo.command, nodeValue);
-		printf("this is da ting : %s\n" , foo.command);
 		commandIndex++;
-		printf("hi\n");
 	}
 	if(strcmp(nodeValue, pipe) == 0){
-		printf("FOUND A PIPE\n");
 		startCommand = -1; // one  away from reading cmd
 	}
 	else if(strcmp(nodeValue, lAngle) == 0){
-		printf("FOUND A LANGLE\n");
 		strcpy(foo.command, nodeValue);
-		printf("this is da ting : %s\n" , foo.command);
 	}
 	else if(strcmp(nodeValue, dubLAngle) == 0){
 		strcpy(foo.command, nodeValue);
-		printf("this is da ting : %s\n" , foo.command);
 	}
 	else if(strcmp(nodeValue, rAngle) == 0){
 		strcpy(foo.command, nodeValue);
-		printf("this is da ting : %s\n" , foo.command);
 	}
 	else if(strcmp(nodeValue, dubRAngle) == 0){
 		strcpy(foo.command, nodeValue);
-		printf("this is da ting : %s\n" , foo.command);
 	}
 	else if(strcmp(nodeValue, amp) == 0){
 		strcpy(foo.command, nodeValue);
-		printf("this is da ting : %s\n" , foo.command);
 	}
 	else{
 		strcpy(foo.args[argIndex] , nodeValue);
 		argIndex++;
 	}
-	printf("arg index is %d\n", argIndex);
-	for(int i = 0; i < argIndex ; i++){
-		printf("%s,",foo.args[i]);
-	}
+
+	
+
+
+	current = foo;
 
 }
 

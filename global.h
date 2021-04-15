@@ -11,7 +11,7 @@ struct Node {
 };
 
 struct nonbuiltin {
-    char args[128][100];
+    char args[128][100] ;
     char command[100];
  };
  struct commandpipeline{
@@ -39,7 +39,9 @@ struct evTable varTable;
 
 struct aTable aliasTable;
 
+struct nonbuiltin current;
 
+bool balls;
 
 
 int aliasIndex, varIndex , commandIndex, argIndex;

@@ -8,10 +8,7 @@
 
 bool isUnalias = false;
 static char* globalEV;
-static char  arguments[100] = "";
-static struct Node* previous = NULL;
-static struct Node* head = NULL;
-static struct Node* tail = NULL;
+int start = 0;
 
 char* subAliases(char* name){
     for (int i = 0; i < aliasIndex; i++) {
@@ -40,38 +37,31 @@ char* substituteEV(char* name){
             return varTable.word[i];
         }
     }
-}
-
-struct Node* appendToLL(struct Node* tail ,struct Node* node){
-    printf("trying to append\n");
-    if(tail->next == NULL){
-        tail->next = node;
-    }
-    else{
-        printf("you didnt give me a tail!\n");
-        printf("next is: %s\n" , tail->next);
-    }
-
-    return tail;
+    return "";
 }
 
 char* parseForEnv(char* input){
     char returnString[200] = "";
     char envString [200] = ""; 
     bool findingEnv = false;
+    printf("input length %d\n" , strlen(input));
     globalEV = input;
 
     
     
 
     for (int i = 0 ; i < strlen(input) ; i++){
-
+        printf("current i: %d\n" , i);
+        printf("current char %c\n" , input[i]);
         if(findingEnv == false)
         { 
             if(input[i] == '$' ){
+                printf("found $\n");
                 findingEnv = true;
+                printf("wtf %d \n" , findingEnv);
             }
             else{
+                printf("no dollar sign, just appending\n");
                 strncat(returnString , &input[i] , 1);
             }
             if(i + 1 == strlen(input)){
@@ -85,6 +75,7 @@ char* parseForEnv(char* input){
         }
         else{
             if(input[i] != '{' && input[i] != '}'){
+                printf("expanding...\n");
                 strncat(envString , &input[i] , 1);
             }
 
@@ -92,13 +83,18 @@ char* parseForEnv(char* input){
                 
                 strcat(returnString , substituteEV(envString));
                 findingEnv = false;
+                printf("finished expansion\n");
             }
             
             
         }
 
         if(i + 1 == strlen(input)){
-    
+            printf("do i return?\n");
+            printf("Was all our hard work worth it: %s\n" , envString);
+            printf("Was all our hard work worth it: %s\n" , returnString);
+            strcpy(globalEV , returnString);
+            printf("fknwork is: %s\n" , globalEV);  
             return &returnString;
         }
         else{
@@ -114,10 +110,12 @@ char* parseForEnv(char* input){
 %}
 %array
 %option noyywrap
+%option stack
 %x string_condition
 %x envVar_condition
+%x testing_condition
 
-CHAR            [&><|.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
+CHAR            [*?.A-Za-z0-9!~\/_-][*?:.A-Za-z0-9!\/_-]*
 ANYCHAR            [$}{)(*&%#@!`;,\.a-zA-Z0-9'/*_=~ -][ $)(}{*&%#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 META [><|\&]
 QUOTE ["]
@@ -130,7 +128,7 @@ RCURLY [}]
 
 
 %%
-
+    start++;
 
 
 <string_condition>{ANYCHAR}+     {parseForEnv(yytext); yylval.string = strdup(globalEV); return STRING;}
@@ -142,12 +140,6 @@ RCURLY [}]
 $\{                 { BEGIN(envVar_condition); }
 [\"]                 { BEGIN(string_condition); }
 
-<envVar_condition>{CHAR}+ {
-        yylval.string = strdup(substituteEV(yytext));
-        printf("%s\n",yylval.string);
-        return STRING;
-    }
-<envVar_condition>{RCURLY}        {BEGIN(INITIAL);}
 
 
 [ ]		            { }
@@ -160,21 +152,30 @@ pwd                 {return PWD;}
 printenv            {return PENV;}
 setenv              {return SENV;}
 unsetenv            {return UENV;}
-mkdir             {yylval.string = strdup(yytext) ; return STRING;}
 "\n"		        { return END; }
 
+"${"{CHAR}+"}"  {
+                    parseForEnv(yytext);
+                    char *yycopy = strdup( globalEV );
+                        for ( int i = strlen(yycopy) - 1; i >= 0; --i ) {
+                            unput( yycopy[i] );
+                        }
+                    free(yycopy);
+    
+                }
+
 {TILDE}+                { return TILDE;}
-{CHAR}+              {if(ifAlias(yytext)) {
+{CHAR}+              {if(start == 1 && ifAlias(yytext)) {
                         printf("yytext: %s\n", yytext);
                            char *yycopy = strdup( subAliases(yytext) );
                            for ( int i = strlen(subAliases(yytext)) - 1; i >= 0; --i )
                                unput( yycopy[i] );
                            free( yycopy );
                     } else {
+                        BEGIN(INITIAL);
                         printf("yytext: %s\n", yytext);
                         yylval.string = strdup(yytext);
                         return STRING;
                     };
                      }
-{META}*        {return META;}
 %%
