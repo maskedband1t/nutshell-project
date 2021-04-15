@@ -113,11 +113,9 @@ char* parseForEnv(char* input){
 %option stack
 %x string_condition
 %x envVar_condition
-%x testing_condition
 
 CHAR            [*?.A-Za-z0-9!~\/_-][*?:.A-Za-z0-9!\/_-]*
 ANYCHAR            [$}{)(*&%#@!`;,\.a-zA-Z0-9'/*_=~ -][ $)(}{*&%#@!`;,\.a-zA-Z0-9'/*_=~ -]*
-META [><|\&]
 QUOTE ["]
 NOTQUOTE [^"]
 TILDE [~]
@@ -151,8 +149,11 @@ pwd                 {return PWD;}
 printenv            {return PENV;}
 setenv              {return SENV;}
 unsetenv            {return UENV;}
-"\n"		        { return END; }
-
+"\n"		        {start = 0; return END; }
+"<"                  { return LANGLE; }
+">"                   { return RANGLE; }
+">>"                   { return DUBR_ANGLE; }
+\|                  {return PIPE;}
 "${"{CHAR}+"}"  {
                     parseForEnv(yytext);
                     char *yycopy = strdup( globalEV );

@@ -18,6 +18,11 @@ struct nonbuiltin {
      struct nonbuilin* 
  };
 
+ struct file_struct {
+    char* name;
+    int type;
+};
+
 // for each command in commandpipeline.commands {
 //     execve(command.command , command.args);
 // }
@@ -39,10 +44,13 @@ struct evTable varTable;
 struct aTable aliasTable;
 
 struct nonbuiltin current;
+struct file_struct* create_file_struct(char* name, int type);
 
 bool balls;
 
 
 int aliasIndex, varIndex , commandIndex, argIndex;
+
+
 
 char* subAliases(char* name);
