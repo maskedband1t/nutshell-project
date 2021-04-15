@@ -15,7 +15,10 @@ int main()
 {
     aliasIndex = 0;
     varIndex = 0;
+    commandIndex = -1;
+    argIndex = 0;
     varTableLength = 0;
+    startCommand = 0;
 
     getcwd(cwd, sizeof(cwd));
 

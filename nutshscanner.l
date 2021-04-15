@@ -117,7 +117,7 @@ char* parseForEnv(char* input){
 %x string_condition
 %x envVar_condition
 
-CHAR            [.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
+CHAR            [&><|.A-Za-z0-9!\/_-][.A-Za-z0-9!\/_-]*
 ANYCHAR            [$}{)(*&%#@!`;,\.a-zA-Z0-9'/*_=~ -][ $)(}{*&%#@!`;,\.a-zA-Z0-9'/*_=~ -]*
 META [><|\&]
 QUOTE ["]
@@ -176,4 +176,5 @@ mkdir             {yylval.string = strdup(yytext) ; return STRING;}
                         return STRING;
                     };
                      }
+{META}*        {return META;}
 %%

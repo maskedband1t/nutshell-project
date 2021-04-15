@@ -24,6 +24,7 @@ int runSetENV(char* var, char* word);
 int runUnSetENV(char* var);
 int listAlias();
 
+
 struct list_node {
     struct list_node  *next;
     char*           value;
@@ -49,7 +50,7 @@ void push_back(struct list *list, char* value) {
 %union {char *string; struct list *list;}
 
 %start cmd_line
-%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV  UENV TEST END 
+%token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV TEST META END 
 %type <list> foobar   
 %%
 cmd_line    :
@@ -66,14 +67,12 @@ cmd_line    :
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
-	| STRING END                    {printf("Unregonized command.\n");return 1;}
-	| foobar END 					{while($1-> head != NULL){printf("node value: %s\n" , $1-> head -> value); $1-> head = $1 -> head -> next;};return 1;}
+	| foobar END 					{$1-> head = $1 -> head -> next; printf("in foobar end\n"); startCommand,commandIndex,argIndex = 0;return 1;};
 
 foobar :
 
-	| STRING 					{push_back($$ = new_list() , $1);printf("made new list\n"); printf("should be something: %s\n" , $$->head);}
-	| foobar STRING				{push_back($1 , $2); $$ = $1; printf("pushed back something\n");}
-
+	| STRING 					{push_back($$ = new_list() , $1); assignToStruct($1);}
+	| foobar STRING				{push_back($1 , $2); $$ = $1; assignToStruct($2); startCommand++;} 
 
 %%
 
@@ -82,6 +81,62 @@ int yyerror(char *s) {
   return 0;
   }
 
+int assignToStruct(char *nodeValue){
+	printf("in here%d\n",startCommand);
+	struct nonbuiltin foo;
+	// char constants
+	char pipe[1] = "|";
+	char lAngle[1] = "<";
+	char dubLAngle[1] = "<<";
+	char rAngle[1] = ">";
+	char dubRAngle[1] = ">>";
+	char amp[1] = "&";
+	char test[100];
+
+	printf("this is node value : %s\n", nodeValue);
+
+	
+	if(startCommand == 0){
+		strcpy(foo.command, nodeValue);
+		printf("this is da ting : %s\n" , foo.command);
+		commandIndex++;
+		printf("hi\n");
+	}
+	if(strcmp(nodeValue, pipe) == 0){
+		printf("FOUND A PIPE\n");
+		startCommand = -1; // one  away from reading cmd
+	}
+	else if(strcmp(nodeValue, lAngle) == 0){
+		printf("FOUND A LANGLE\n");
+		strcpy(foo.command, nodeValue);
+		printf("this is da ting : %s\n" , foo.command);
+	}
+	else if(strcmp(nodeValue, dubLAngle) == 0){
+		strcpy(foo.command, nodeValue);
+		printf("this is da ting : %s\n" , foo.command);
+	}
+	else if(strcmp(nodeValue, rAngle) == 0){
+		strcpy(foo.command, nodeValue);
+		printf("this is da ting : %s\n" , foo.command);
+	}
+	else if(strcmp(nodeValue, dubRAngle) == 0){
+		strcpy(foo.command, nodeValue);
+		printf("this is da ting : %s\n" , foo.command);
+	}
+	else if(strcmp(nodeValue, amp) == 0){
+		strcpy(foo.command, nodeValue);
+		printf("this is da ting : %s\n" , foo.command);
+	}
+	else{
+		strcpy(foo.args[argIndex] , nodeValue);
+		argIndex++;
+	}
+	printf("arg index is %d\n", argIndex);
+	for(int i = 0; i < argIndex ; i++){
+		printf("%s,",foo.args[i]);
+	}
+
+}
 
 
 int runCD(char* arg) {

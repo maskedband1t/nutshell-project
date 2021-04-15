@@ -3,21 +3,21 @@
 
 
 int varTableLength;
+int startCommand;
 
 struct Node {
     char* data ;
     struct Node* next ;
 };
 
-// struct nonbuiltin {
-//     char args[128][100];
-//     char* command;
-// };
-// struct commandpipeline{
-//     struct nonbuiltin commands[];
-//     struct nonbuiltin head ;
-//     struct nonbuiltin* next;
-// };
+struct nonbuiltin {
+    char args[128][100];
+    char command[100];
+ };
+ struct commandpipeline{
+     struct nonbuiltin commands;
+     struct nonbuiltin head;
+ };
 
 // for each command in commandpipeline.commands {
 //     execve(command.command , command.args);
@@ -39,6 +39,9 @@ struct evTable varTable;
 
 struct aTable aliasTable;
 
-int aliasIndex, varIndex;
+
+
+
+int aliasIndex, varIndex , commandIndex, argIndex;
 
 char* subAliases(char* name);
