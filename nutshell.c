@@ -19,6 +19,52 @@ struct file_struct* create_file_struct(char* name, int type) {
     printf("type: %d\n", output->type);
     return output;
 }
+
+struct linked_list* create_LL(const char *value){
+    struct linked_list* ll = malloc(sizeof(struct linked_list));
+        ll->value = malloc(1024 * sizeof(char));
+        ll->next = NULL;
+        strcpy(ll->value, value);
+        return ll;
+}
+
+struct cmd_group* create_cmd_group(char* cmd, struct linked_list* args){
+    //first find how many arguments in args
+    int count = 0;
+    struct linked_list* temp = args;
+    while(temp != NULL){
+        count++;
+        temp = temp->next;
+    }
+    return count;
+
+    char **grouping = malloc((2 + count) * sizeof(struct linked_list*));
+
+    grouping[0] = malloc(sizeof(char) * 1024);
+    strcpy(grouping[0], cmd);         // first cmd, last null , everything in middle is args for execv
+    //populate the middle
+
+    struct linked_list* temp2 = args;
+    for(int i = 1; temp2 != NULL && i < count + 1; i++){
+        grouping[i] = malloc(sizeof(char) * 1024);
+        strcpy(grouping[i] , temp2->value);
+        temp2 = temp2->next;
+    }
+
+    grouping[count + 1] = (char *) NULL; // last as null
+
+    struct cmd_group* group = grouping;
+    return group;
+
+}
+
+struct cmd_pipeline* create_pipeline_LL(struct cmd_group* grouping){
+    struct cmd_pipeline* head = malloc(sizeof(struct cmd_pipeline));
+
+    head->group = grouping;
+    head->next = NULL;
+    return head;
+}
 // ! need a function that takes in all args in commandpipeline and executes execve for all of them 
 
 int runNonBuilt(struct nonbuiltin command){
@@ -125,6 +171,7 @@ int runNonBuilt(struct nonbuiltin command){
 
     argIndex = 0;
 
+    balls = false;
     return 0;
 }
 

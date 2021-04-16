@@ -150,10 +150,11 @@ printenv            {return PENV;}
 setenv              {return SENV;}
 unsetenv            {return UENV;}
 "\n"		        {start = 0; return END; }
+\|                  {return PIPE;}
 "<"                  { return LANGLE; }
 ">"                   { return RANGLE; }
 ">>"                   { return DUBR_ANGLE; }
-\|                  {return PIPE;}
+
 "${"{CHAR}+"}"  {
                     parseForEnv(yytext);
                     char *yycopy = strdup( globalEV );
