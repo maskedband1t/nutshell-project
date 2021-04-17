@@ -14,20 +14,29 @@ struct nonbuiltin {
     char args[128][100] ;
     char command[100];
  };
-
- struct cmdNode {
-     struct nonbuiltin command;
-     struct cmdNode* next;
- };
- typedef struct commandpipeline{
-     struct cmdNode* head;
-     
+ struct commandpipeline{
+     struct nonbuilin* nbi;
  };
 
  struct file_struct {
     char* name;
     int type;
 };
+struct linked_list {
+    struct linked_list  *next;
+    char*           value;
+};
+
+struct cmd_group {
+    char** grouping;
+    struct cmd_group* next;
+};
+
+struct cmd_pipeline {   // acts as a linked list
+    struct cmd_group* group;
+    struct cmd_pipeline* next;
+};
+
 
 // for each command in commandpipeline.commands {
 //     execve(command.command , command.args);
@@ -51,7 +60,10 @@ struct aTable aliasTable;
 
 struct nonbuiltin current;
 struct file_struct* create_file_struct(char* name, int type);
-struct commandpipeline cmd_list ;
+struct linked_list* create_LL(const char *value);
+struct cmd_group* create_cmd_group(char* cmd, struct linked_list* args);
+struct cmd_pipeline* create_pipeline_LL(struct cmd_group* group);
+int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, struct file_struct* file_out);
 
 bool balls;
 

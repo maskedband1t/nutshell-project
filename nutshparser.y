@@ -22,41 +22,25 @@ int printENV();
 int runSetENV(char* var, char* word);
 int runUnSetENV(char* var);
 int listAlias(struct file_struct* file);
-
-
-struct list_node {
-    struct list_node  *next;
-    char*           value;
-};
-struct list {
-    struct list_node  *head, **tail;
-};
-
-struct list *new_list() {
-    struct list *rv = malloc(sizeof(struct list));
-    rv->head = 0;
-    rv->tail = &rv->head;
-    return rv; }
-void push_back(struct list *list, char* value) {
-    struct list_node *node = malloc(sizeof(struct list_node));
-    node->next = 0;
-    node->value = value;
-    *list->tail = node;
-    list->tail = &node->next; }
+int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out);
 
 %}
 
 %union {
 	char *string; 
-	struct list *list;
+	struct cmd_pipeline* pipeline;
+	struct cmd_group_struct*  group;
+	struct linked_list *list;
 	struct file_struct* f;
 	int symbol;
 }
 
 %start cmd_line
 %token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV TEST META END 
-%token <symbol>  LANGLE, RANGLE DUBR_ANGLE PIPE
-%type <list> foobar   
+%token <symbol>  LANGLE RANGLE DUBR_ANGLE PIPE
+%type <list> args
+%type <pipeline> cmd_pipeline
+%type <group> cmd_group
 %type<f> file_out
 %%
 cmd_line    :
@@ -73,28 +57,86 @@ cmd_line    :
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
-	| foobar END 					{$1-> head = $1 -> head -> next; startCommand,commandIndex = 0;return 1;};
+	| cmd_pipeline file_out END       {printf("ayo??\n");runPipeLine($1,$2); return 1;}
+	//| foobar file_out END 					{$1-> head = $1 -> head -> next; startCommand,commandIndex = 0;return 1;};
 
-foobar :
+//foobar :
 
-	| STRING 					{balls = true;push_back($$ = new_list() , $1); assignToStruct($1);}
-	| foobar STRING				{push_back($1 , $2); $$ = $1; assignToStruct($2); startCommand++;} 
+//	| STRING 					{balls = true; startCommand = 0;push_back($$ = new_list() , $1); assignToStruct($1);}
+//	| foobar STRING				{push_back($1 , $2); $$ = $1; assignToStruct($2); startCommand++;} 
+
+
 
 file_out :                          { $$ = NULL; }
         | DUBR_ANGLE STRING         { $$ = create_file_struct($2, 0); }
         | RANGLE STRING            	{ $$ = create_file_struct($2, 1); }
+
+cmd_pipeline: cmd_group             {$$ = create_pipeline_LL($1);}
+		| cmd_group PIPE cmd_pipeline   {
+											struct cmd_group* head = create_pipeline_LL($1);
+											head->next = $3;
+											$$ = head;
+										}
+
+cmd_group:				{$$ = NULL;}
+		| STRING args   {$$ = create_cmd_group($1,$2);}    // to create data structure to put in command PIPES
+
+args:                 {$$ = NULL;}           
+		| STRING args  {
+						printf("$1 is: %s \n" , $1);
+						printf("$2 is: %s \n" , $2);
+						struct linked_list* head = create_LL($1);
+						if(head == NULL){
+							$$ = NULL;
+						}
+						else{
+							struct linked_list* temp = head;
+							
+							while(temp->next != NULL){ //traverse
+								temp = temp->next;
+							}
+							temp->next = $2;   // handle arguments recursively
+						}
+							$$ = head;
+					}
 
 %%
 
 int yyerror(char *s) {
   printf("%s\n",s);
   return 0;
-  }
+}
+
+int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out)
+{
+	struct cmd_pipeline* temp1 = malloc(sizeof(struct cmd_pipeline));
+	temp1 = head;
+    int count = 0;
+
+    while (temp1 != NULL) {
+        count++;
+        temp1 = temp1->next;
+    }
+
+    if(head ==  NULL){
+        return 1;
+    }
+    if(head->group  == NULL){
+        return 1;
+    }
+
+    struct cmd_pipeline* temp2 = head;
+    while (temp2 != NULL) {
+        printf("ABOUT TO RUN EXEC\n");
+		sendToExec(temp2 , count , file_out);
+        temp2 = temp2->next;
+    }
+}
 
 int assignToStruct(char *nodeValue){
 	struct nonbuiltin foo;
 	// char constants
-	char pipe[1] = "|";
+	char testpipe[1] = "|";
 	char testlAngle[1] = "<";
 	char testdubLAngle[1] = "<<";
 	char testrAngle[1] = ">";
@@ -108,7 +150,7 @@ int assignToStruct(char *nodeValue){
 		strcpy(foo.command, nodeValue);
 		commandIndex++;
 	}
-	if(strcmp(nodeValue, pipe) == 0){
+	if(strcmp(nodeValue, testpipe) == 0){
 		startCommand = -1; // one  away from reading cmd
 	}
 	else if(strcmp(nodeValue, amp) == 0){
@@ -120,54 +162,7 @@ int assignToStruct(char *nodeValue){
 	}
 
 	
-	struct cmdNode* cur = malloc(sizeof(struct cmdNode));
-	cur -> command = foo;
 
-	// adding node to command lsit
-
-	if(cmd_list.head == NULL){
-		printf("hi its me\n");
-		cmd_list.head = cur;
-		cmd_list.head -> next = NULL;
-
-	}
-	else{
-		// printf("mem address of tail: %d\n" , (int)cmd_list.tail);
-
-		// struct cmdNode* temp = malloc(sizeof(struct cmdNode));
-		// temp = cmd_list.head;
-
-		// while(temp -> next != NULL){
-		// 	printf("passing node: %s\n" , temp->command.command);
-		// 	temp = temp -> next;
-		// }
-		// printf("prolly here\n");
-		// temp->next = cur;
-		
-
-
-
-		// if((int)cmd_list.tail == 0){
-		// 	printf("do i get called?\n");
-		// 	cmd_list.tail = cur;
-		// 	cmd_list.tail -> next = NULL;
-
-		// }
-
-	}
-
-	printf("head is: %s\n" , cmd_list.head->command.command);
-
-
-	struct cmdNode* temp = malloc(sizeof(struct cmdNode));
-	temp = cmd_list.head;
-
-
-	while(temp != NULL ){
-
-		printf("One node is: %s\n" , temp->command.command);
-		temp = temp->next;
-	}
 
 	current = foo;
 
@@ -320,6 +315,23 @@ int runUnAlias(char* name){
 }
 
 int runSetAlias(char *name, char *word) {
+	int index = -1;
+	for (int i = 0; i < aliasIndex; i++){
+		if(strcmp(name, aliasTable.name[i]) == 0){
+			index = i;
+		}	
+	}
+	char temp[200];
+	if(index == -1){
+		strcpy(aliasTable.name[aliasIndex], name);
+		strcpy(aliasTable.word[aliasIndex], word);
+		aliasIndex++;
+	}
+
+	else{ // found somewhere else
+		strcpy(temp, aliasTable.word[index]);
+		strcpy(aliasTable.word[index] , word);
+	}
 	for (int i = 0; i < aliasIndex; i++) {
 		if(strcmp(name, word) == 0){
 			printf("Error, expansion of \"%s\" would create a loop.\n", name);
