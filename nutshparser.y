@@ -58,12 +58,7 @@ cmd_line    :
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
 	| cmd_pipeline file_out END       {printf("ayo??\n");runPipeLine($1,$2); return 1;}
-	//| foobar file_out END 					{$1-> head = $1 -> head -> next; startCommand,commandIndex = 0;return 1;};
 
-//foobar :
-
-//	| STRING 					{balls = true; startCommand = 0;push_back($$ = new_list() , $1); assignToStruct($1);}
-//	| foobar STRING				{push_back($1 , $2); $$ = $1; assignToStruct($2); startCommand++;} 
 
 
 
@@ -126,11 +121,7 @@ int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out)
     }
 
     struct cmd_pipeline* temp2 = head;
-    while (temp2 != NULL) {
-        printf("ABOUT TO RUN EXEC\n");
-		sendToExec(temp2 , count , file_out);
-        temp2 = temp2->next;
-    }
+	sendToExec(temp2 , count , file_out);
 }
 
 int assignToStruct(char *nodeValue){

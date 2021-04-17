@@ -145,7 +145,6 @@ bye                 { return BYE; }
 cd		            { return CD;}
 alias		        { return ALIAS; }
 unalias             {isUnalias = true; return UNALIAS;}
-pwd                 {return PWD;}
 printenv            {return PENV;}
 setenv              {return SENV;}
 unsetenv            {return UENV;}
