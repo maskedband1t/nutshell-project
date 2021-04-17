@@ -120,7 +120,54 @@ int assignToStruct(char *nodeValue){
 	}
 
 	
+	struct cmdNode* cur = malloc(sizeof(struct cmdNode));
+	cur -> command = foo;
 
+	// adding node to command lsit
+
+	if(cmd_list.head == NULL){
+		printf("hi its me\n");
+		cmd_list.head = cur;
+		cmd_list.head -> next = NULL;
+
+	}
+	else{
+		// printf("mem address of tail: %d\n" , (int)cmd_list.tail);
+
+		// struct cmdNode* temp = malloc(sizeof(struct cmdNode));
+		// temp = cmd_list.head;
+
+		// while(temp -> next != NULL){
+		// 	printf("passing node: %s\n" , temp->command.command);
+		// 	temp = temp -> next;
+		// }
+		// printf("prolly here\n");
+		// temp->next = cur;
+		
+
+
+
+		// if((int)cmd_list.tail == 0){
+		// 	printf("do i get called?\n");
+		// 	cmd_list.tail = cur;
+		// 	cmd_list.tail -> next = NULL;
+
+		// }
+
+	}
+
+	printf("head is: %s\n" , cmd_list.head->command.command);
+
+
+	struct cmdNode* temp = malloc(sizeof(struct cmdNode));
+	temp = cmd_list.head;
+
+
+	while(temp != NULL ){
+
+		printf("One node is: %s\n" , temp->command.command);
+		temp = temp->next;
+	}
 
 	current = foo;
 

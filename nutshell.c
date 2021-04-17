@@ -125,6 +125,8 @@ int runNonBuilt(struct nonbuiltin command){
 
     argIndex = 0;
 
+    balls = false;
+
     return 0;
 }
 

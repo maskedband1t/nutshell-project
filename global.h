@@ -14,8 +14,14 @@ struct nonbuiltin {
     char args[128][100] ;
     char command[100];
  };
- struct commandpipeline{
-     struct nonbuilin* 
+
+ struct cmdNode {
+     struct nonbuiltin command;
+     struct cmdNode* next;
+ };
+ typedef struct commandpipeline{
+     struct cmdNode* head;
+     
  };
 
  struct file_struct {
@@ -45,6 +51,7 @@ struct aTable aliasTable;
 
 struct nonbuiltin current;
 struct file_struct* create_file_struct(char* name, int type);
+struct commandpipeline cmd_list ;
 
 bool balls;
 
