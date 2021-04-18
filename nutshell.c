@@ -223,7 +223,6 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
                 if (file_out->type == 0) {
                     mode = "a";
                 }
-
                 // will send to an output file if one is specified
                 FILE *new_file = fopen(file_out->name, mode);
                 if (new_file != NULL) {
@@ -294,160 +293,8 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
     
     waitpid(-1 , &status , 0);
     waitpid(-1 , &status , 0);
-
-    
-
-    // cpid = fork();
-
-    // if(cpid == 0){
-    //     // left side of pipe
-    //     close(pipefd[0]);
-    //     dup2(pipefd[1] , STDOUT_FILENO);
-
-    //     char** curGroup = temp -> group -> grouping;
-    //     char* correctPath = "";
-
-    //     for(int v = 0 ; v < num_paths; v++){
-    //         char* tempPath = strdup(pathsArr[v]);
-    //         strcat(tempPath , (char*) "/");
-    //         strcat(tempPath , curGroup[0]);
-    //         printf("temp path is%s\n",tempPath);
-
-    //         if(access(tempPath , F_OK) == 0){
-    //             correctPath = strdup(tempPath);
-    //             break;
-    //         }
-
-    //     }
-
-    //     execv(correctPath , curGroup);
-
-    // }
-    // cpid = fork();
-    // if(cpid == 0){
-    //     //right side of pipe
-    //     close(pipefd[1]);
-    //     dup2(pipefd[0] , STDIN_FILENO);
-    //     temp = temp -> next;
-
-    //     char** curGroup = temp -> group -> grouping;
-    //     char* correctPath = "";
-
-    //     for(int v = 0 ; v < num_paths; v++){
-    //         char* tempPath = strdup(pathsArr[v]);
-    //         strcat(tempPath , (char*) "/");
-    //         strcat(tempPath , curGroup[0]);
-    //         printf("temp path is%s\n",tempPath);
-
-    //         if(access(tempPath , F_OK) == 0){
-    //             correctPath = strdup(tempPath);
-    //             break;
-    //         }
-
-    //     }
-
-    //     execv(correctPath , curGroup);
-    // }
-
-    // close(pipefd[0]);
-    // close(pipefd[1]);
-
  
 }
-
-int runNonBuilt(struct nonbuiltin command){
-    printf("its ya boy");
-
-    int ret;
-
-    // !! this is how we need to parse our PATH variable 
-
-    char pathDelimited[100] = "";
-    char* path = strdup(varTable.word[3]);
-    char* ogPath = strdup(varTable.word[3]);
-
-
-    int num_paths = 1;
-
-    while(*path != '\0'){
-        if(*path == ':'){
-            num_paths++;
-        }
-        path++;
-    }
-
-
-    char* pathsArr [num_paths];
-
-
-
-    char* currentPath = strtok(varTable.word[3] , ":");
-    
-    pathsArr[0] = currentPath;
-
-
-    for (int i = 1 ; i < num_paths ; i++){
-        currentPath = strtok(NULL , ":");
-        pathsArr[i] = currentPath;
-    }
-
-
-
-
-
-
-
-
-    // ? from here , we need to check each path and see if there exists an executable in that path. If so, then use execv with that given path. 
-    // ! might need to make path_vars struct, hopefully not tho
-
-
-    // i.e running echo command 
-    // 1. go thru each path and append the command and call access on that path. if its ok then i use that path 
-
-    char* correctPath = "";
-
-    for(int i = 0 ; i < num_paths; i++){
-        char* tempPath = strdup(pathsArr[i]);
-        strcat(tempPath , (char*) "/");
-        strcat(tempPath , command.args[0]);
-
-        if(access(tempPath , F_OK) == 0){
-            correctPath = strdup(tempPath);
-            break;
-        }
-        
-    }
-
-    if(strcmp(correctPath , (char*)"") == 0){
-        // means we didnt find an exe in any of the paths in PATH
-        printf("nah son try another command \n");
-
-    }
-
-
- 
-    printf("calling execv...\n");
-
-    char* arr[argIndex + 1];
-
-    for(int i = 0 ; i < argIndex ; i++){
-        arr[i] = command.args[i];
-    }
-
-    arr[argIndex] = NULL;
-
-    strcpy(varTable.word[3] , ogPath);
-
-
-        // child process
-    ret = execv(correctPath , arr);
-    wait(2);
-
-    argIndex = 0;
-    return 0;
-}
-
 int main()
 {
     aliasIndex = 0;
@@ -483,10 +330,6 @@ int main()
     system("clear");
     while(1)
     {
-        // if(balls == true){
-        //     printf("yoyoyo\n");
-        //     runNonBuilt(current);
-        // }
         printf("[%s]>> ", varTable.word[2]);
         yyparse();
     }

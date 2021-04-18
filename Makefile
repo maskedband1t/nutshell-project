@@ -3,10 +3,10 @@ CC=/usr/bin/cc
 all:  bison-config flex-config nutshell output
 
 bison-config:
-	bison -t -d nutshparser.y
+	bison -d nutshparser.y
 
 flex-config:
-	flex -d nutshscanner.l
+	flex nutshscanner.l
 
 nutshell: 
 	gcc nutshell.c nutshparser.tab.c lex.yy.c -o nutshell.o

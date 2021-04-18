@@ -130,41 +130,6 @@ int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* fi
 	sendToExec(temp2 , count , file_in , file_out,background);
 }
 
-int assignToStruct(char *nodeValue){
-	struct nonbuiltin foo;
-	// char constants
-	char testpipe[1] = "|";
-	char testlAngle[1] = "<";
-	char testdubLAngle[1] = "<<";
-	char testrAngle[1] = ">";
-	char testdubRAngle[1] = ">>";
-	char amp[1] = "&";
-	char test[100];
-
-
-	
-	if(startCommand == 0){
-		strcpy(foo.command, nodeValue);
-		commandIndex++;
-	}
-	if(strcmp(nodeValue, testpipe) == 0){
-		startCommand = -1; // one  away from reading cmd
-	}
-	else if(strcmp(nodeValue, amp) == 0){
-		strcpy(foo.command, nodeValue);
-	}
-	else{
-		strcpy(foo.args[argIndex] , nodeValue);
-		argIndex++;
-	}
-
-	
-
-
-	current = foo;
-
-}
-
 
 int runCD(char* arg) {
 	if (arg[0] != '/') { // arg is relative path
@@ -269,7 +234,6 @@ int listAlias(struct file_struct* file){
 int runSetENV(char* var, char* word){
 
 	for (int i = 0; i < varIndex; i++) {
-
 		if((strcmp(varTable.var[i], var) == 0) && (strcmp(varTable.word[i], word) == 0)){
 			printf("Error, expansion of \"%s\" would create a loop.\n", var);
 			return 1;

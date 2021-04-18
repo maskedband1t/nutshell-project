@@ -94,7 +94,7 @@ char* parseForEnv(char* input){
             printf("Was all our hard work worth it: %s\n" , envString);
             printf("Was all our hard work worth it: %s\n" , returnString);
             strcpy(globalEV , returnString);
-            printf("fknwork is: %s\n" , globalEV);  
+            printf("global is: %s\n" , globalEV);  
             return &returnString;
         }
         else{
@@ -112,7 +112,6 @@ char* parseForEnv(char* input){
 %option noyywrap
 %option stack
 %x string_condition
-%x envVar_condition
 
 CHAR            [*?.A-Za-z0-9!~\/_-][*?:.A-Za-z0-9!\/_-]*
 ANYCHAR            [$}{)(*&%#@!`;,\.a-zA-Z0-9'/*_=~ -][ $)(}{*&%#@!`;,\.a-zA-Z0-9'/*_=~ -]*
@@ -135,7 +134,6 @@ RCURLY [}]
 
 
 
-$\{                 { BEGIN(envVar_condition); }
 [\"]                 { BEGIN(string_condition); }
 
 
