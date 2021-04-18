@@ -22,7 +22,7 @@ int printENV();
 int runSetENV(char* var, char* word);
 int runUnSetENV(char* var);
 int listAlias(struct file_struct* file);
-int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* file_out );
+int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* file_out, int background );
 
 %}
 
@@ -37,30 +37,33 @@ int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* fi
 
 %start cmd_line
 %token <string> BYE CD STRING WORD ALIAS UNALIAS TILDE LS PWD PENV SENV UENV TEST META END 
-%token <symbol>  LANGLE RANGLE DUBR_ANGLE PIPE
+%token <symbol>  LANGLE RANGLE DUBR_ANGLE PIPE BACKGROUND
 %type <list> args
 %type <pipeline> cmd_pipeline
 %type <group> cmd_group
 %type<f> file_out
 %type<string> file_in
+%type<symbol> background
 %%
 cmd_line    :
-	BYE END 		                {balls = false; exit(1); return 1; }
-	| CD STRING END        			{balls = false; runCD($2); return 1;}
-	| CD END                       {balls = false;runCDHome("~"); return 1;}
-	| CD TILDE END                 {balls = false; runCDHome($2); return 1;}
-	| ALIAS STRING STRING END		{printf("HUHHH");balls = false; runSetAlias($2,$3); return 1;}
-	| ALIAS file_out END                    {balls = false; listAlias($2); return 1;}
-	| UNALIAS STRING END           {balls = false; runUnAlias($2); return 1;}
-	| PENV END                     	{balls = false; printENV(); return 1;}
-	| SENV STRING STRING END     	{balls = false; runSetENV($2,$3); return 1;}
+	| BYE END 		                {exit(0); return 1; }
+	| CD STRING END        			{ runCD($2); return 1;}
+	| CD END                       {runCDHome("~"); return 1;}
+	| CD TILDE END                 { runCDHome($2); return 1;}
+	| ALIAS STRING STRING END		{ runSetAlias($2,$3); return 1;}
+	| ALIAS file_out END                    { listAlias($2); return 1;}
+	| UNALIAS STRING END           { runUnAlias($2); return 1;}
+	| PENV END                     	{ printENV(); return 1;}
+	| SENV STRING STRING END     	{ runSetENV($2,$3); return 1;}
 	| UENV STRING END            	{runUnSetENV($2); return 1;}
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
-	| cmd_pipeline file_in file_out END       {printf("ayo??\n");runPipeLine($1,$2 ,$3); return 1;}
+	| cmd_pipeline file_in file_out background END       {runPipeLine($1,$2 ,$3, $4); return 1;}
 
-
+// definining background OFF as 0 and ON as 1
+background :                        { $$ = 0; }
+           | BACKGROUND         { $$ = 1; }
 
 file_in :                            { $$ = NULL; }
        | LANGLE STRING              { $$ = $2; }
@@ -105,7 +108,7 @@ int yyerror(char *s) {
   return 0;
 }
 
-int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* file_out )
+int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* file_out, int background)
 {
 	struct cmd_pipeline* temp1 = malloc(sizeof(struct cmd_pipeline));
 	temp1 = head;
@@ -124,7 +127,7 @@ int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* fi
     }
 
     struct cmd_pipeline* temp2 = head;
-	sendToExec(temp2 , count , file_in , file_out);
+	sendToExec(temp2 , count , file_in , file_out,background);
 }
 
 int assignToStruct(char *nodeValue){
@@ -309,23 +312,6 @@ int runUnAlias(char* name){
 }
 
 int runSetAlias(char *name, char *word) {
-	int index = -1;
-	for (int i = 0; i < aliasIndex; i++){
-		if(strcmp(name, aliasTable.name[i]) == 0){
-			index = i;
-		}	
-	}
-	char temp[200];
-	if(index == -1){
-		strcpy(aliasTable.name[aliasIndex], name);
-		strcpy(aliasTable.word[aliasIndex], word);
-		aliasIndex++;
-	}
-
-	else{ // found somewhere else
-		strcpy(temp, aliasTable.word[index]);
-		strcpy(aliasTable.word[index] , word);
-	}
 	for (int i = 0; i < aliasIndex; i++) {
 		if(strcmp(name, word) == 0){
 			printf("Error, expansion of \"%s\" would create a loop.\n", name);

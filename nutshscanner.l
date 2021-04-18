@@ -153,6 +153,7 @@ unsetenv            {return UENV;}
 "<"                  { return LANGLE; }
 ">"                   { return RANGLE; }
 ">>"                   { return DUBR_ANGLE; }
+"&"                    {return BACKGROUND;}
 
 "${"{CHAR}+"}"  {
                     parseForEnv(yytext);

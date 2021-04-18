@@ -1,4 +1,0 @@
-.=/mnt/c/Users/jonat/nutshellProject/nutshell-project
-a=b
-joe=shmoe
-hannah=montana

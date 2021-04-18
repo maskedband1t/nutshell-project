@@ -70,7 +70,7 @@ struct cmd_pipeline* create_pipeline_LL(struct cmd_group* group){
 }
 // ! need a function that takes in all args in commandpipeline and executes execve for all of them 
 
-int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, struct file_struct* file_out){
+int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, struct file_struct* file_out, int background){
     struct cmd_pipeline* test = malloc(sizeof(struct cmd_pipeline));
     test = pipeline;
     int count = 0;
@@ -98,7 +98,6 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
     char* pathJ = strdup(varTable.word[3]);
     char* ogPath = strdup(varTable.word[3]);
     char* holder = strdup(varTable.word[3]);
-    printf("varTable.word[3] is:%s\n",varTable.word[3]);
 
     int num_paths = 1;
 
@@ -156,7 +155,6 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
                 }
                 // get no stdin from pipe
                 curGroup = temp -> group -> grouping;
-                printf("command should be ls: %s\n" , curGroup[0]);
                 close(pipefd[0]);
                 if(nodeCount != 1){
                     
@@ -165,7 +163,6 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
                 else{
                     // if this is the only command, check if theres a file_out where the output should go to. will go to stdout otherwise
                     if (file_out != NULL) {
-                        printf("shouldnt print\n");
                         char *mode = "w";
                         if (file_out->type == 0) {
                             mode = "a";
@@ -178,7 +175,6 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
                             close(file_no);
                         }
                 }
-                printf("should print\n");
                 }
 
                 
@@ -190,6 +186,9 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
 
                 for(int v = 0 ; v < num_paths; v++){
                     char* tempPath = strdup(pathsArr[v]);
+                    if(strcmp(tempPath, ".") ==   0){
+                        tempPath = strdup(varTable.word[0]); // should be current working directory
+                    }
                     strcat(tempPath , (char*) "/");
                     strcat(tempPath , curGroup[0]);
                     // printf("temp path is%s\n",tempPath);
@@ -290,12 +289,13 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
 
         }
     }
-
     close(pipefd[0]);
     close(pipefd[1]);
+    
+    waitpid(-1 , &status , 0);
+    waitpid(-1 , &status , 0);
 
-    waitpid(-1 , &status , 0);
-    waitpid(-1 , &status , 0);
+    
 
     // cpid = fork();
 
@@ -354,236 +354,6 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, stru
 
  
 }
-
-// int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, struct file_struct* file_out){
-//     struct cmd_pipeline* test = malloc(sizeof(struct cmd_pipeline));
-//     test = pipeline;
-//     int count = 0;
-//     int ret = 0;
-//     while(test != NULL){
-//         count++;
-//         printf("trying to print group[0]:%s\n",test->group->grouping[0]);
-//         test = test->next;
-//     }
-
-
-//     // !! this is how we need to parse our PATH variable 
-
-//     char pathDelimited[100] = "";
-//     char* pathJ = strdup(varTable.word[3]);
-//     char* ogPath = strdup(varTable.word[3]);
-//     char* holder = strdup(varTable.word[3]);
-//     printf("varTable.word[3] is:%s\n",varTable.word[3]);
-
-//     int num_paths = 1;
-
-//     while(*pathJ != '\0'){
-//         if(*pathJ == ':'){
-//             num_paths++;
-//         }
-//         pathJ++;
-//     }
-
-
-//     char* pathsArr [num_paths];
-
-
-
-//     char* currentPath = strtok(holder , ":");
-    
-//     pathsArr[0] = currentPath;
-
-
-    
-//     for (int i = 1 ; i < num_paths ; i++){
-//         currentPath = strtok(NULL , ":");
-//         pathsArr[i] = currentPath;
-//     }
-
-
-//     // go in each command
-//      // i.e running echo command 
-//     // 1. go thru each path and append the command and call access on that path. if its ok then i use that path 
-
-   
-
-
-  
-
-//     int pipeCount = nodeCount - 1; // as a rule
-//     int p[pipeCount][2];
-//     int tempPipe[2];
-//     // pipe(tempPipe);
-
-
-//     for (int i = 0; i < pipeCount; i++) { // open pipe
-//         if (pipe(p[i]) < 0) { //oh no woe is me
-//             printf("error on pipe: opening pipe#  %d\n", i);
-//             exit(EXIT_FAILURE);
-//         }
-//     }
-
-//     for (int i = 0; i < nodeCount; i++) {
-//         printf("forking\n");
-//         int child = fork();
-//         if(child == 0){
-//             printf("child process%d\n",i);
-//             if(i == 0){
-//                printf("child processinside%d\n",i); 
-//                 if(nodeCount == 1){
-//                     if(file_out != NULL){
-//                         char *mode = "w";
-//                         if(file_out->type == 0) {
-//                             mode = "a";
-//                         }
-//                         FILE *new_file = fopen(file_out->name, mode); // opens file
-//                         if (new_file != NULL) {
-//                             printf("for herman\n");
-//                             int file_no = fileno(new_file);
-//                             dup2(file_no, STDOUT_FILENO);
-//                             close(file_no);
-//                         }
-//                     }
-//                 }
-//                 else {
-//                     printf("it going here i: %d \n"  ,i);
-  
-//                     dup2(p[i][1], STDOUT_FILENO);
-//                     // dup2(tempPipe[1], STDOUT_FILENO);
-
-//                 }
-
-//             } // first
-//             else if (i == nodeCount - 1) { // last
-//                 printf("why u not worke i: %d\n" , i);
-//                 char line[1000];
-                
-//                 while(fgets(line, 1000, stdout)!= NULL){     puts(line); }
-
-//                 printf("didnt print shit\n");
-//                 dup2(p[i-1][1], STDIN_FILENO);
-//                 // dup2(tempPipe[0], STDIN_FILENO);
-
-
-//                 if (file_out != NULL) {
-//                     printf("should not log\n");
-//                     char *mode = "w";
-//                     if (file_out->type == 0) {
-//                         mode = "a";
-//                     }
-//                     FILE *new_file = fopen(file_out->name, mode);
-//                     if (new_file != NULL) {
-//                         int file_no = fileno(new_file);
-//                         dup2(file_no, STDOUT_FILENO);
-//                         close(file_no);
-//                     }
-//                 }
-//             }
-//             else { // middle tings in pipeline
-//                 printf("in middle\n");
-//                 dup2(p[i-1][0], STDIN_FILENO);
-//                 dup2(p[i][1], STDOUT_FILENO);
-//             }
-        
-//             //  iterate thru cmd pipeline, extract groups
-//             // groups have groupings (char**), first[cmd], last[\0], everything in middle is argument
-//             //find first working path and execute
-
-         
-
-//             // int size = strlen(varTable.var[3]);
-//             // char* path = malloc(size * sizeof(char));
-//             // strcpy(path, varTable.word[3]);
-//             // path should now hold whatever was in the env var table at index 3 // hardcoded to be the path
-//             // we gotta go thru this path and find the executable we want
-
-//             struct cmd_pipeline* temp = malloc(sizeof(struct cmd_pipeline));
-//             temp = pipeline;
-
-//             // char** curGroup = malloc((nodeCount + 2) * sizeof(char*));
-        
-
-//             while(temp != NULL){
-//                 char** curGroup = temp -> group -> grouping;
-
-
-
-//                 char* correctPath = "";
-
-//                 for(int v = 0 ; v < num_paths; v++){
-//                     char* tempPath = strdup(pathsArr[v]);
-//                     strcat(tempPath , (char*) "/");
-//                     strcat(tempPath , curGroup[0]);
-//                     printf("temp path is%s\n",tempPath);
-
-//                     if(access(tempPath , F_OK) == 0){
-//                         correctPath = strdup(tempPath);
-//                         break;
-//                     }
-                    
-//                 }
-//                 printf("correct path before nah son: %s\n",correctPath);
-//                 if(strcmp(correctPath , (char*)"") == 0){
-//                     // means we didnt find an exe in any of the paths in PATH
-//                     printf("nah son try another command \n");
-
-//                 }
-
-//                 printf("before execv...%d\n",nodeCount);
-                
-//                 printf("%dDOES IT EVER GET HERE\n",nodeCount);
-
-//                 // i.e ls -l -> cp = /bin/ls cg = ls -l
-                
-//                 ret = execv(correctPath , curGroup);
-
-         
-//                 printf("failed... \n");
-
-//                 for (int j = 0; j < pipeCount; j++) {  //close PIPEs
-//                     close(p[j][0]);
-//                     close(p[j][1]);
-//                 }
-                
-//             }
-
-
-            
-//             // bool found = false;
-//             // for (int j = 0; j < paths->num_paths; j++) {
-//             //     char *new_cmd = append_str(paths->paths[j], cmds[i].val[0]);
-//             //     execvp(new_cmd, cmds[i].val);
-//             // }
-//             // if(found){
-//             //     execvp(new_cmd, cmds[i].val);
-//             // }
-//             dup2(1, STDOUT_FILENO);
-//             close(STDIN_FILENO);
-//             close(STDOUT_FILENO);
-//             exit(EXIT_FAILURE);
-//         }
-
-        
-//             printf("cum %d\n" , ret);
-//                               char line[1000];
-//                     while(fgets(line, 1000, stdout)!= NULL){     printf(" plz fkn work%s\n",line); }
-
-//         wait(2);
-
-//         argIndex = 0;
-
-//         balls = false;
-//     }
-
-//     for (int j = 0; j < pipeCount; j++) {  //close PIPEs
-//         close(p[j][0]);
-//         close(p[j][1]);
-//     }
-//     for (int x = 0; x < nodeCount; x++) { // for forks
-//         wait(NULL);
-//     }
-//     return 0;
-// }
 
 int runNonBuilt(struct nonbuiltin command){
     printf("its ya boy");
@@ -675,8 +445,6 @@ int runNonBuilt(struct nonbuiltin command){
     wait(2);
 
     argIndex = 0;
-
-    balls = false;
     return 0;
 }
 

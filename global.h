@@ -63,13 +63,9 @@ struct file_struct* create_file_struct(char* name, int type);
 struct linked_list* create_LL(const char *value);
 struct cmd_group* create_cmd_group(char* cmd, struct linked_list* args);
 struct cmd_pipeline* create_pipeline_LL(struct cmd_group* group);
-int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in ,  struct file_struct* file_out);
-
-bool balls;
+int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in ,  struct file_struct* file_out, int background);
 
 
 int aliasIndex, varIndex , commandIndex, argIndex;
-
-
 
 char* subAliases(char* name);
