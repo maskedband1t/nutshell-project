@@ -22,7 +22,7 @@ int printENV();
 int runSetENV(char* var, char* word);
 int runUnSetENV(char* var);
 int listAlias(struct file_struct* file);
-int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out);
+int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* file_out );
 
 %}
 
@@ -42,6 +42,7 @@ int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out);
 %type <pipeline> cmd_pipeline
 %type <group> cmd_group
 %type<f> file_out
+%type<string> file_in
 %%
 cmd_line    :
 	BYE END 		                {balls = false; exit(1); return 1; }
@@ -57,10 +58,12 @@ cmd_line    :
 	| LS END 						{runLs(); return 1;}
 	| PWD END                       {runPWD(); return 1;}
 	| TEST END						{printf("Hi"); return 1;}
-	| cmd_pipeline file_out END       {printf("ayo??\n");runPipeLine($1,$2); return 1;}
+	| cmd_pipeline file_in file_out END       {printf("ayo??\n");runPipeLine($1,$2 ,$3); return 1;}
 
 
 
+file_in :                            { $$ = NULL; }
+       | LANGLE STRING              { $$ = $2; }
 
 file_out :                          { $$ = NULL; }
         | DUBR_ANGLE STRING         { $$ = create_file_struct($2, 0); }
@@ -102,7 +105,7 @@ int yyerror(char *s) {
   return 0;
 }
 
-int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out)
+int runPipeLine(struct cmd_pipeline* head, char* file_in, struct file_struct* file_out )
 {
 	struct cmd_pipeline* temp1 = malloc(sizeof(struct cmd_pipeline));
 	temp1 = head;
@@ -121,7 +124,7 @@ int runPipeLine(struct cmd_pipeline* head, struct file_struct* file_out)
     }
 
     struct cmd_pipeline* temp2 = head;
-	sendToExec(temp2 , count , file_out);
+	sendToExec(temp2 , count , file_in , file_out);
 }
 
 int assignToStruct(char *nodeValue){

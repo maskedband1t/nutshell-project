@@ -70,7 +70,7 @@ struct cmd_pipeline* create_pipeline_LL(struct cmd_group* group){
 }
 // ! need a function that takes in all args in commandpipeline and executes execve for all of them 
 
-int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, struct file_struct* file_out){
+int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, char* file_in, struct file_struct* file_out){
     struct cmd_pipeline* test = malloc(sizeof(struct cmd_pipeline));
     test = pipeline;
     int count = 0;
@@ -145,6 +145,15 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, struct file_struct*
         cpid = fork();
         if(cpid == 0){
             if (i == 0){
+
+                if (file_in != NULL) {
+                    FILE *new_file = fopen(file_in, "r");
+                    if (new_file != NULL) {
+                        int file_no = fileno(new_file);
+                        dup2(file_no, STDIN_FILENO);
+                        close(file_no);
+                    }
+                }
                 // get no stdin from pipe
                 curGroup = temp -> group -> grouping;
                 printf("command should be ls: %s\n" , curGroup[0]);
@@ -153,6 +162,26 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, struct file_struct*
                     
                     dup2(pipefd[1] , STDOUT_FILENO);
                 }
+                else{
+                    // if this is the only command, check if theres a file_out where the output should go to. will go to stdout otherwise
+                    if (file_out != NULL) {
+                        printf("shouldnt print\n");
+                        char *mode = "w";
+                        if (file_out->type == 0) {
+                            mode = "a";
+                        }
+
+                        FILE *new_file = fopen(file_out->name, mode);
+                        if (new_file != NULL) {
+                            int file_no = fileno(new_file);
+                            dup2(file_no, STDOUT_FILENO);
+                            close(file_no);
+                        }
+                }
+                printf("should print\n");
+                }
+
+                
                 
 
                
@@ -176,9 +205,34 @@ int sendToExec(struct cmd_pipeline* pipeline, int nodeCount, struct file_struct*
             execv(correctPath , curGroup);
             }
             else if (i == nodeCount - 1){
-                // dont send output to pipe , rather to stdout
+                // dont send output to pipe , rather to stdout or file if file_out
+
+                if (file_in != NULL) {
+                    FILE *new_file = fopen(file_in, "r");
+                    if (new_file != NULL) {
+                        int file_no = fileno(new_file);
+                        dup2(file_no, STDIN_FILENO);
+                        close(file_no);
+                    }
+                }
+                
                 close(pipefd[1]);
                 dup2(pipefd[0] , STDIN_FILENO);
+                if (file_out != NULL) {
+                printf("trying to send output to file \n" );
+                char *mode = "w";
+                if (file_out->type == 0) {
+                    mode = "a";
+                }
+
+                // will send to an output file if one is specified
+                FILE *new_file = fopen(file_out->name, mode);
+                if (new_file != NULL) {
+                    int file_no = fileno(new_file);
+                    dup2(file_no, STDOUT_FILENO);
+                    close(file_no);
+                }
+                }
 
                 curGroup = allGroups[i + 1] -> grouping;
                 printf("command should be wc: %s\n" , curGroup[0]);
